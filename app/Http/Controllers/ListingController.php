@@ -72,6 +72,7 @@ class ListingController extends Controller
 
     //
     public function update(Request $request, $id) {
+
         $formFields = $request->validate([
             'title' => 'required',
             'company' => ['required'],
@@ -86,17 +87,31 @@ class ListingController extends Controller
         if($request->hasFile('logo')) {
             $formFields['logo'] = $request->file('logo')->store('logos', 'public');
         }
+        
+        // check that the current user is the owner
+        $listing = Listing::where('id', '=', $id)->first();
 
-        // dd($formFields);
+        if($listing->user_id != auth()->id()) {
+            abort(403, 'Unauthorized Action');
+        }
 
-        Listing::where('id', '=', $id)->update($formFields);
+
+        $listing->update($formFields);
 
         return back()->with('message', 'Listing updated successfully!');
     }
 
     // Delete a listing
     public function destroy($id) {
-        Listing::where('id', '=', $id)->delete();
+
+        // check that the current user is the owner
+        $listing = Listing::where('id', '=', $id)->first();
+
+        if($listing->user_id != auth()->id()) {
+            abort(403, 'Unauthorized Action');
+        }
+
+        $listing->delete();
         return back()->with('message', "Listing deleted successfully!");
     }
  
